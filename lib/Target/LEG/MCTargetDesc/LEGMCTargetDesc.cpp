@@ -14,7 +14,6 @@
 #include "LEGMCTargetDesc.h"
 #include "InstPrinter/LEGInstPrinter.h"
 #include "LEGMCAsmInfo.h"
-#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -57,24 +56,6 @@ static MCAsmInfo *createLEGMCAsmInfo(const MCRegisterInfo &MRI,
   return new LEGMCAsmInfo(TT);
 }
 
-static MCCodeGenInfo *createLEGMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
-                                             CodeModel::Model CM,
-                                             CodeGenOpt::Level OL) {
-  MCCodeGenInfo *X = new MCCodeGenInfo();
-  if (RM == Reloc::Default) {
-    RM = Reloc::Static;
-  }
-  if (CM == CodeModel::Default) {
-    CM = CodeModel::Small;
-  }
-  if (CM != CodeModel::Small && CM != CodeModel::Large) {
-    report_fatal_error("Target only supports CodeModel Small or Large");
-  }
-
-  X->initMCCodeGenInfo(RM, CM, OL);
-  return X;
-}
-
 static MCInstPrinter *
 createLEGMCInstPrinter(const Triple &TT, unsigned SyntaxVariant,
                        const MCAsmInfo &MAI, const MCInstrInfo &MII,
@@ -85,27 +66,21 @@ createLEGMCInstPrinter(const Triple &TT, unsigned SyntaxVariant,
 // Force static initialization.
 extern "C" void LLVMInitializeLEGTargetMC() {
   // Register the MC asm info.
-  RegisterMCAsmInfoFn X(TheLEGTarget, createLEGMCAsmInfo);
-
-  // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(TheLEGTarget, createLEGMCCodeGenInfo);
+  RegisterMCAsmInfoFn X(getTheLegTarget(), createLEGMCAsmInfo);
 
   // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheLEGTarget, createLEGMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(getTheLegTarget(), createLEGMCInstrInfo);
 
   // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheLEGTarget, createLEGMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(getTheLegTarget(), createLEGMCRegisterInfo);
 
   // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheLEGTarget,
+  TargetRegistry::RegisterMCSubtargetInfo(getTheLegTarget(),
                                           createLEGMCSubtargetInfo);
 
   // Register the MCInstPrinter
-  TargetRegistry::RegisterMCInstPrinter(TheLEGTarget, createLEGMCInstPrinter);
-
-  // Register the ASM Backend.
-  TargetRegistry::RegisterMCAsmBackend(TheLEGTarget, createLEGAsmBackend);
+  TargetRegistry::RegisterMCInstPrinter(getTheLegTarget(), createLEGMCInstPrinter);
 
   // Register the MCCodeEmitter
-  TargetRegistry::RegisterMCCodeEmitter(TheLEGTarget, createLEGMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(getTheLegTarget(), createLEGMCCodeEmitter);
 }

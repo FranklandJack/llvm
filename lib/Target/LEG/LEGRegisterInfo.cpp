@@ -30,7 +30,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
@@ -81,7 +81,7 @@ void LEGRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           RegScavenger *RS) const {
   MachineInstr &MI = *II;
   const MachineFunction &MF = *MI.getParent()->getParent();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineOperand &FIOp = MI.getOperand(FIOperandNum);
   unsigned FI = FIOp.getIndex();
 
@@ -99,7 +99,7 @@ void LEGRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // FIXME: check the size of offset.
   MachineOperand &ImmOp = MI.getOperand(ImmOpIdx);
-  int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize() + ImmOp.getImm();
+  int Offset = MFI.getObjectOffset(FI) + MFI.getStackSize() + ImmOp.getImm();
   FIOp.ChangeToRegister(LEG::SP, false);
   ImmOp.setImm(Offset);
 }

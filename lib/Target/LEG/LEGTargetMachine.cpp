@@ -15,12 +15,12 @@
 #include "LEGFrameLowering.h"
 #include "LEGInstrInfo.h"
 #include "LEGISelLowering.h"
-#include "LEGSelectionDAGInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 
 using namespace llvm;
 
@@ -34,10 +34,11 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
 LEGTargetMachine::LEGTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
-                                   Reloc::Model RM, CodeModel::Model CM,
-                                   CodeGenOpt::Level OL)
+                                   Optional<Reloc::Model> RM,
+                                   Optional<CodeModel::Model> CM,
+                                   CodeGenOpt::Level OL, bool JIT)
     : LLVMTargetMachine(T, computeDataLayout(TT, CPU, Options), TT, CPU, FS,
-                        Options, RM, CM, OL),
+                        Options, *RM, *CM, OL),
       Subtarget(TT, CPU, FS, *this),
       TLOF(make_unique<TargetLoweringObjectFileELF>()) {
   initAsmInfo();
@@ -47,7 +48,7 @@ namespace {
 /// LEG Code Generator Pass Configuration Options.
 class LEGPassConfig : public TargetPassConfig {
 public:
-  LEGPassConfig(LEGTargetMachine *TM, PassManagerBase &PM)
+  LEGPassConfig(LEGTargetMachine &TM, PassManagerBase &PM)
       : TargetPassConfig(TM, PM) {}
 
   LEGTargetMachine &getLEGTargetMachine() const {
@@ -61,7 +62,7 @@ public:
 } // namespace
 
 TargetPassConfig *LEGTargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new LEGPassConfig(this, PM);
+  return new LEGPassConfig(*this, PM);
 }
 
 bool LEGPassConfig::addPreISel() { return false; }
@@ -75,5 +76,5 @@ void LEGPassConfig::addPreEmitPass() {}
 
 // Force static initialization.
 extern "C" void LLVMInitializeLEGTarget() {
-  RegisterTargetMachine<LEGTargetMachine> X(TheLEGTarget);
+  RegisterTargetMachine<LEGTargetMachine> X(getTheLegTarget());
 }

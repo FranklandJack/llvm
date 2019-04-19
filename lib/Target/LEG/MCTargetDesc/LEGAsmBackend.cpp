@@ -23,10 +23,12 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/Support/ELF.h"
+#include "llvm/MC/MCAsmBackend.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MachO.h"
+#include "llvm/BinaryFormat/MachO.h"
 #include "llvm/Support/raw_ostream.h"
+#include <memory>
 using namespace llvm;
 
 namespace {
@@ -39,7 +41,8 @@ public:
 
 class LEGAsmBackend : public MCAsmBackend {
 public:
-  LEGAsmBackend(const Target &T, const StringRef TT) : MCAsmBackend() {}
+  LEGAsmBackend(const Target &T, const StringRef TT)
+      : MCAsmBackend(/* is this correct? */ support::little) {}
 
   ~LEGAsmBackend() {}
 
@@ -66,17 +69,15 @@ public:
     return Infos[Kind - FirstTargetFixupKind];
   }
 
-  /// processFixupValue - Target hook to process the literal value of a fixup
-  /// if necessary.
-  void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                         const MCFixup &Fixup, const MCFragment *DF,
-                         const MCValue &Target, uint64_t &Value,
-                         bool &IsResolved) override;
+  void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                  const MCValue &Target, MutableArrayRef<char> Data,
+                  uint64_t Value, bool IsResolved,
+                  const MCSubtargetInfo *STI) const override;
 
-  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value, bool IsPCRel) const override;
-
-  bool mayNeedRelaxation(const MCInst &Inst) const override { return false; }
+  bool mayNeedRelaxation(const MCInst &Inst,
+                         const MCSubtargetInfo &STI) const override {
+    return false;
+  }
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
@@ -84,9 +85,10 @@ public:
     return false;
   }
 
-  void relaxInstruction(const MCInst &Inst, MCInst &Res) const override {}
+  void relaxInstruction(const MCInst &Inst, const MCSubtargetInfo &STI,
+                        MCInst &Red) const override {}
 
-  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override {
+  bool writeNopData(raw_ostream &OS, uint64_t Count) const override {
     if (Count == 0) {
       return true;
     }
@@ -117,22 +119,13 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   return Value;
 }
 
-void LEGAsmBackend::processFixupValue(const MCAssembler &Asm,
-                                      const MCAsmLayout &Layout,
-                                      const MCFixup &Fixup,
-                                      const MCFragment *DF,
-                                      const MCValue &Target, uint64_t &Value,
-                                      bool &IsResolved) {
-  // We always have resolved fixups for now.
-  IsResolved = true;
-  // At this point we'll ignore the value returned by adjustFixupValue as
-  // we are only checking if the fixup can be applied correctly.
-  (void)adjustFixupValue(Fixup, Value, &Asm.getContext());
-}
+void LEGAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                               const MCValue &Target,
+                               MutableArrayRef<char> Data, uint64_t Value,
+                               bool IsResolved,
+                               const MCSubtargetInfo *STI) const {
 
-void LEGAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
-                               unsigned DataSize, uint64_t Value,
-                               bool isPCRel) const {
+  unsigned DataSize = Data.size();
   unsigned NumBytes = 4;
   Value = adjustFixupValue(Fixup, Value);
   if (!Value) {
@@ -158,8 +151,9 @@ public:
   ELFLEGAsmBackend(const Target &T, const StringRef TT, uint8_t _OSABI)
       : LEGAsmBackend(T, TT), OSABI(_OSABI) {}
 
-  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createLEGELFObjectWriter(OS, OSABI);
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return nullptr;
   }
 };
 

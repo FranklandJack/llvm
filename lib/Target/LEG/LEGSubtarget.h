@@ -18,10 +18,9 @@
 #include "LEGFrameLowering.h"
 #include "LEGISelLowering.h"
 #include "LEGInstrInfo.h"
-#include "LEGSelectionDAGInfo.h"
 #include "LEGSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
@@ -37,7 +36,6 @@ private:
   const DataLayout DL;       // Calculates type size & alignment.
   LEGInstrInfo InstrInfo;
   LEGTargetLowering TLInfo;
-  LEGSelectionDAGInfo TSInfo;
   LEGFrameLowering FrameLowering;
   InstrItineraryData InstrItins;
 
@@ -62,9 +60,6 @@ public:
   }
   const LEGFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
-  }
-  const LEGSelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
   }
 
   /// ParseSubtargetFeatures - Parses features string setting specified

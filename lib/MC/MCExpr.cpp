@@ -293,6 +293,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PPC_TLSLD: return "tlsld";
   case VK_PPC_LOCAL: return "local";
   case VK_COFF_IMGREL32: return "IMGREL";
+  case VK_LEG_LO: return "LEG_LO";
+  case VK_LEG_HI: return "LEG_HI";
   case VK_Hexagon_PCREL: return "PCREL";
   case VK_Hexagon_LO16: return "LO16";
   case VK_Hexagon_HI16: return "HI16";
@@ -332,6 +334,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("plt", VK_PLT)
     .Case("tlscall", VK_TLSCALL)
     .Case("tlsdesc", VK_TLSDESC)
+    .Case("LEG_LO", VK_LEG_LO)
+    .Case("LEG_HI", VK_LEG_HI)
     .Case("tlsgd", VK_TLSGD)
     .Case("tlsld", VK_TLSLD)
     .Case("tlsldm", VK_TLSLDM)

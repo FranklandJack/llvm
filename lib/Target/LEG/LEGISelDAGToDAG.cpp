@@ -34,11 +34,11 @@ public:
   explicit LEGDAGToDAGISel(LEGTargetMachine &TM, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(TM, OptLevel), Subtarget(*TM.getSubtargetImpl()) {}
 
-  SDNode *Select(SDNode *N) override;
+  void Select(SDNode *N) override;
 
   bool SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
 
-  virtual const char *getPassName() const override {
+  virtual StringRef getPassName() const override {
     return "LEG DAG->DAG Pattern Instruction Selection";
   }
 
@@ -75,7 +75,7 @@ SDNode *LEGDAGToDAGISel::SelectMoveImmediate(SDNode *N) {
   uint64_t ImmVal = ConstVal->getZExtValue();
   uint64_t SupportedMask = 0xfffffffff;
   if ((ImmVal & SupportedMask) != ImmVal) {
-    return SelectCode(N);
+    SelectCode(N);
   }
 
   // Select the low part of the immediate move.
@@ -103,13 +103,13 @@ SDNode *LEGDAGToDAGISel::SelectConditionalBranch(SDNode *N) {
   SDValue LHS = N->getOperand(2);
   SDValue RHS = N->getOperand(3);
   SDValue Target = N->getOperand(4);
-  
+
   // Generate a comparison instruction.
   EVT CompareTys[] = { MVT::Other, MVT::Glue };
   SDVTList CompareVT = CurDAG->getVTList(CompareTys);
   SDValue CompareOps[] = {LHS, RHS, Chain};
   SDNode *Compare = CurDAG->getMachineNode(LEG::CMP, N, CompareVT, CompareOps);
-  
+
   // Generate a predicated branch instruction.
   CondCodeSDNode *CC = cast<CondCodeSDNode>(Cond.getNode());
   SDValue CCVal = CurDAG->getTargetConstant(CC->get(), N, MVT::i32);
@@ -118,15 +118,17 @@ SDNode *LEGDAGToDAGISel::SelectConditionalBranch(SDNode *N) {
   return CurDAG->getMachineNode(LEG::Bcc, N, MVT::Other, BranchOps);
 }
 
-SDNode *LEGDAGToDAGISel::Select(SDNode *N) {
+void LEGDAGToDAGISel::Select(SDNode *N) {
   switch (N->getOpcode()) {
   case ISD::Constant:
-    return SelectMoveImmediate(N);
+    SelectMoveImmediate(N);
+    break;
   case ISD::BR_CC:
-    return SelectConditionalBranch(N);
+    SelectConditionalBranch(N);
+    break;
   }
 
-  return SelectCode(N);
+   SelectCode(N);
 }
 
 /// createLEGISelDag - This pass converts a legalized DAG into a

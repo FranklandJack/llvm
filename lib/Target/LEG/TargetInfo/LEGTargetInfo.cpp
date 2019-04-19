@@ -7,13 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LEG.h"
-#include "llvm/IR/Module.h"
+#include "MCTargetDesc/LEGMCTargetDesc.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-Target llvm::TheLEGTarget;
+Target &llvm::getTheLegTarget() {
+  static Target TheLegTarget;
+  return TheLegTarget;
+}
 
 extern "C" void LLVMInitializeLEGTargetInfo() {
-  RegisterTarget<Triple::leg> X(TheLEGTarget, "leg", "LEG");
+  RegisterTarget<Triple::leg, /*HasJIT*/ false> X(
+      getTheLegTarget(), "leg", "The Leg example backend", "LEG");
 }

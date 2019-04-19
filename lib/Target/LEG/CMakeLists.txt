@@ -16,7 +16,6 @@ add_llvm_target(LEGCodeGen
   LEGInstrInfo.cpp
   LEGFrameLowering.cpp
   LEGISelLowering.cpp
-  LEGSelectionDAGInfo.cpp
   LEGISelDAGToDAG.cpp
   LEGAsmPrinter.cpp
   LEGMCInstLower.cpp

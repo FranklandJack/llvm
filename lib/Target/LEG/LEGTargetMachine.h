@@ -18,7 +18,6 @@
 #include "LEGFrameLowering.h"
 #include "LEGISelLowering.h"
 #include "LEGInstrInfo.h"
-#include "LEGSelectionDAGInfo.h"
 #include "LEGSubtarget.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
@@ -31,13 +30,14 @@ class LEGTargetMachine : public LLVMTargetMachine {
 
 public:
   LEGTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
-                   StringRef FS, const TargetOptions &Options, Reloc::Model RM,
-                   CodeModel::Model CM, CodeGenOpt::Level OL);
-  
+                   StringRef FS, const TargetOptions &Options,
+                   Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
+                   CodeGenOpt::Level OL, bool JIT = false);
+
   const LEGSubtarget * getSubtargetImpl() const {
     return &Subtarget;
   }
-  
+
   virtual const TargetSubtargetInfo *
   getSubtargetImpl(const Function &) const override {
     return &Subtarget;
@@ -45,7 +45,7 @@ public:
 
   // Pass Pipeline Configuration
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
-  
+
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }

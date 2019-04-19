@@ -28,12 +28,12 @@ namespace {
 
     virtual ~LEGELFObjectWriter();
 
-    unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                          bool IsPCRel) const override;
+    unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
+                          const MCFixup &Fixup, bool IsPCRel) const override;
   };
 }
 
-unsigned LEGELFObjectWriter::GetRelocType(const MCValue &Target,
+unsigned LEGELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel) const {
   if (!IsPCRel) {
@@ -60,7 +60,7 @@ LEGELFObjectWriter::LEGELFObjectWriter(uint8_t OSABI)
 
 LEGELFObjectWriter::~LEGELFObjectWriter() {}
 
-MCObjectWriter *llvm::createLEGELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI) {
-  MCELFObjectTargetWriter *MOTW = new LEGELFObjectWriter(OSABI);
-  return createELFObjectWriter(MOTW, OS, /*IsLittleEndian=*/true);
+std::unique_ptr<MCObjectWriter> llvm::createLEGELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI) {
+  std::unique_ptr<MCELFObjectTargetWriter> MOTW{new LEGELFObjectWriter(OSABI)};
+  return createELFObjectWriter(std::move(MOTW), OS, /*IsLittleEndian=*/true);
 }

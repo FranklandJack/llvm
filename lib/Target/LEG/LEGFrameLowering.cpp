@@ -24,7 +24,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetLowering.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include <algorithm> // std::sort
 
@@ -40,15 +40,15 @@ LEGFrameLowering::LEGFrameLowering()
 
 bool LEGFrameLowering::hasFP(const MachineFunction &MF) const {
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||
-         MF.getFrameInfo()->hasVarSizedObjects();
+         MF.getFrameInfo().hasVarSizedObjects();
 }
 
 uint64_t LEGFrameLowering::computeStackSize(MachineFunction &MF) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  uint64_t StackSize = MFI->getStackSize();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  uint64_t StackSize = MFI.getStackSize();
   unsigned StackAlign = getStackAlignment();
   if (StackAlign > 0) {
-    StackSize = RoundUpToAlignment(StackSize, StackAlign);
+    StackSize = alignTo(StackSize, StackAlign);
   }
   return StackSize;
 }
@@ -140,12 +140,12 @@ void LEGFrameLowering::emitEpilogue(MachineFunction &MF,
 
 // This function eliminates ADJCALLSTACKDOWN, ADJCALLSTACKUP pseudo
 // instructions
-void LEGFrameLowering::eliminateCallFramePseudoInstr(
+MachineBasicBlock::iterator LEGFrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator I) const {
   if (I->getOpcode() == LEG::ADJCALLSTACKUP ||
       I->getOpcode() == LEG::ADJCALLSTACKDOWN) {
     MBB.erase(I);
   }
-  return;
+  return I;
 }

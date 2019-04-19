@@ -14,7 +14,7 @@
 #ifndef LEGREGISTERINFO_H
 #define LEGREGISTERINFO_H
 
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
 #include "LEGGenRegisterInfo.inc"

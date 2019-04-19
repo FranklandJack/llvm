@@ -15,6 +15,7 @@
 #define LEGMCTARGETDESC_H
 
 #include "llvm/Support/DataTypes.h"
+#include <memory>
 
 namespace llvm {
 class Target;
@@ -34,7 +35,7 @@ class raw_ostream;
 class raw_pwrite_stream;
 class Triple;
 
-extern Target TheLEGTarget;
+Target &getTheLegTarget();
 
 MCCodeEmitter *createLEGMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
@@ -43,7 +44,8 @@ MCCodeEmitter *createLEGMCCodeEmitter(const MCInstrInfo &MCII,
 MCAsmBackend *createLEGAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   const Triple &TT, StringRef CPU);
 
-MCObjectWriter *createLEGELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI);
+std::unique_ptr<MCObjectWriter> createLEGELFObjectWriter(raw_pwrite_stream &OS,
+                                                         uint8_t OSABI);
 
 } // End llvm namespace
 

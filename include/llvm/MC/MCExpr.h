@@ -272,6 +272,9 @@ public:
     VK_PPC_TLSLD,          // symbol@tlsld
     VK_PPC_LOCAL,          // symbol@local
 
+    VK_LEG_LO,
+    VK_LEG_HI,
+
     VK_COFF_IMGREL32, // symbol@imgrel (image-relative)
 
     VK_Hexagon_PCREL,
